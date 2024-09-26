@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPDLC Request Menu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>CPDLC Request Menu</h1>
+        <div id="atc-messages">
+            <!-- ATC message display -->
+            <h2>ATC MESSAGES</h2>
+            <div class="atc-message-box" id="atc-message-box"></div>
+            <div id="response-buttons" style="display: none;">
+                <button id="wilco" class="response-btn wilco">WILCO</button>
+                <button id="standby" class="response-btn standby">STANDBY</button>
+                <button id="unable" class="response-btn unable">UNABLE</button>
+            </div>
+        </div>
+        
+        <h2>REQUEST MENU</h2>
+        <div id="request-menu">
+            <button id="engine-start" class="request-btn">ENGINE START<span class="status-circle" id="engine-start-status"></span></button>
+            <button id="pushback" class="request-btn">PUSHBACK<span class="status-circle" id="pushback-status"></span></button>
+            <button id="taxi-clearance" class="request-btn">TAXI CLEARANCE<span class="status-circle" id="taxi-clearance-status"></span></button>
+            <button id="lineup" class="request-btn">LINEUP<span class="status-circle" id="lineup-status"></span></button>
+            <button id="takeoff-clearance" class="request-btn">TAKEOFF CLEARANCE<span class="status-circle" id="takeoff-clearance-status"></span></button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    text-align: center;
+    padding: 50px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    text-align: center;
+    color: #007bff;
+}
+
+#atc-messages {
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #495057;
+    display: block; /* Ensure the ATC message box is visible */
+}
+
+button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px auto;
+    padding: 15px 20px;
+    font-size: 18px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 80%;
+    position: relative;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#response-buttons {
+    margin-top: 20px;
+}
+
+.response-button {
+    background-color: #28a745;
+}
+
+.response-button:hover {
+    background-color: #218838;
+}
+
+/* Adjusted styling for status circle with checkmark */
+.status-circle {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    background-color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    color: #28a745;
+    visibility: hidden; /* Hidden by default */
+    margin-left: 10px;
+}
+
+.status-circle.visible {
+    visibility: visible;
+    background-color: #28a745;
+    color: white;
+}
