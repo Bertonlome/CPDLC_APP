@@ -118,6 +118,8 @@ const dropdowns = [
     { id: "de-icing", tickId: "de-icing-tick-icon" }
 ];
 
+let previous_entry = null;
+
 // Function to add a tick mark to a button
 function addTickMarkToButton(buttonId) {
     const button = document.getElementById(buttonId);
@@ -202,7 +204,7 @@ function handleLoadButtonClick() {
     fetch('/load', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestType: 'loadTaxiClearance' })
+        body: JSON.stringify({ requestType: previous_entry })  // Sending previous entry in the body
     })
     .then(response => response.json())
     .then(data => {
@@ -325,7 +327,10 @@ function handleActionButtonClick(action) {
 }
 
 // Function for sending request actions (e.g., Expected Taxi Clearance, Engine Startup)
-function sendRequest(action, dropdownId, tickId) {
+function sendRequest(action, dropdownId, tickId, previous_msg) {
+    if(action === "taxi_clearance") {
+        console.log("Taxi Clearance button clicked: Sending a request to server...");
+    }
     console.log(`Sending request for action: ${action}`);
     fetch(`/request/${action}`, {
         method: 'GET'
@@ -334,13 +339,16 @@ function sendRequest(action, dropdownId, tickId) {
     .then(data => {
         if (data.error) {
             console.error(data.error);
-            alert(`Error: ${data.error}`);
-        } else {
+        }
+        if(action === "expected_taxi_clearance") {
+            setTimeout(() => sendRequest('expected_taxi_clearance', dropdownId, tickId, previous_msg), 3000);
+        }
+        if (action != "expected_taxi_clearance" || action === "expected_taxi_clearance" && data.message != previous_msg) {
             const messageBox = document.getElementById('message-box');
             const newMessage = document.createElement('div');
             newMessage.innerHTML = `
                 <p>
-                    <span class="timestamp">${data.timestamp}</span> | 
+                    <span class="timestamp">${data.timestamp}</span> |
                     <span class="message-title">${data.action}</span>
                     <span class="status open">OPEN</span>
                 </p>
@@ -355,15 +363,16 @@ function sendRequest(action, dropdownId, tickId) {
             // Update taxi clearance if applicable
             if (action === "expected_taxi_clearance") {
                 updateTaxiClearance(data.message, "open");
+                previous_msg = data.message;
             }
             messageBox.scrollTop = messageBox.scrollHeight;
+            previous_entry = action;
         }
     })
     .catch(error => {
         console.error('Error sending request:', error);
         alert('Error communicating with server.');
     });
-
     // Add tick mark to Expected Taxi Clearance button after sending the request
     completeProcess(dropdownId, tickId);
 }

@@ -71,14 +71,23 @@ def set_bool(name, value, my_data):
         igs.error("Invalid output name")
 
 
-def string_input_callback(io_type, name, value_type, value, my_data):
-    global response
+def exp_t_c_string_input_callback(io_type, name, value_type, value, my_data):
+    global exp_t_c_response
     igs.info(f"Input {name} written to {value}")
     agent_object = my_data
     assert isinstance(agent_object, Echo)
-    agent_object.stringI = value
-    response["status"] = "closed"
-    response["message"]= value
+    agent_object.exp_t_c = value
+    exp_t_c_response["status"] = "closed"
+    exp_t_c_response["message"]= value
+    
+def t_c_string_input_callback(io_type, name, value_type, value, my_data):
+    global t_c_response
+    igs.info(f"Input {name} written to {value}")
+    agent_object = my_data
+    assert isinstance(agent_object, Echo)
+    agent_object.exp_t_c = value
+    t_c_response["status"] = "closed"
+    t_c_response["message"]= value
 
 # INGESCAPE STUFF
 
@@ -91,10 +100,24 @@ ATC_RESPONSES = {
     "engine_startup": "ENGINE STARTUP APPROVED",
     "pushback": "PUSHBACK APPROVED",
     "taxi_clearance": "TAXI CLEARANCE GRANTED",
-    "de_icing": "DE-ICING NOT REQUIRED"
+    "de-icing": "DE-ICING NOT REQUIRED"
 }
 
-response = {
+exp_t_c_response = {
+    "timestamp": None,
+    "action": None,
+    "message": None,
+    "status": "first"
+}
+
+t_c_response = {
+    "timestamp": None,
+    "action": None,
+    "message": None,
+    "status": "open"
+}
+
+previous_response = {
     "timestamp": None,
     "action": None,
     "message": None,
@@ -123,44 +146,61 @@ def log_action():
 # Handle ATC requests
 @app.route('/request/<action>', methods=['GET'])
 def request_action(action):
-    global response
+    global exp_t_c_response, t_c_response
+    
     if action in ATC_RESPONSES:
         if action == "expected_taxi_clearance":
             set_bool("expected_taxi_clearance", True, agent)
-        if action == "engine_startup":
-            set_bool("engine_startup", True, agent)
-        if action == "pushback":
-            set_bool("pushback", True, agent)
-        if action == "taxi_clearance":
+            exp_t_c_response["timestamp"] = datetime.now().strftime("%H:%M:%S")
+            exp_t_c_response["action"] = action.replace(" ", "_").title()
+            app.logger.info(f"Action requested: {action} - Response: {exp_t_c_response}")
+            return jsonify(exp_t_c_response)
+        
+        elif action == "taxi_clearance":
             set_bool("taxi_clearance", True, agent)
-        if action == "de-icing":
-            set_bool("de-icing", True, agent)
-        response = {
-            "timestamp": datetime.now().strftime("%H:%M:%S"),
-            "action": action.replace("_", " ").title(),
-            "message": ATC_RESPONSES[action],
-            "status": "open"
-        }
-        while response["status"] == "open":
-            time.sleep(1)
-        app.logger.info(f"Action requested: {action} - Response: {response}")
-        return jsonify(response)
+            print("Taxi clearance requested")
+            t_c_response["status"] = "open"
+            while t_c_response["status"] == "open":
+                time.sleep(1)
+            t_c_response["timestamp"] = datetime.now().strftime("%H:%M:%S")
+            t_c_response["action"] = action.replace(" ", "_").title()
+            app.logger.info(f"Action requested: {action} - Response: {exp_t_c_response}")
+            return jsonify(t_c_response)
+        
+        else:
+            if action == "engine_startup":
+                set_bool("engine_startup", True, agent)
+            elif action == "pushback":
+                set_bool("pushback", True, agent)
+            elif action == "de-icing":
+                set_bool("de-icing", True, agent)
+            
+            time.sleep(2)  # Simulate processing delay
+            response = {
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "message": ATC_RESPONSES[action],
+                "status": "closed",
+                "action": action.replace(" ", "_").title()
+            }
+            app.logger.info(f"Action requested: {action} - Response: {exp_t_c_response}")
+            return jsonify(response)
     else:
-        app.logger.warning(f"Invalid action requested: {action}")
         return jsonify({"error": "Invalid action"}), 400
+
 
 # Load taxi clearance
 @app.route('/load', methods=['POST'])
 def load_taxi_clearance():
     data = request.get_json()
-    if data and data.get("requestType") == "loadTaxiClearance":
-        if response["status"] == None or response["status"] == "open":
-            return jsonify({"error": "Action in progress"}), 400
-        set_bool("load", True, agent)
-        time.sleep(1)  # Simulate processing delay
-        response["timestamp"] = datetime.now().strftime("%H:%M:%S")
-        app.logger.info("Taxi clearance data loaded.")
-        return jsonify(response)
+    set_bool("load", True, agent)
+    app.logger.info("Taxi clearance data loaded.")
+    time.sleep(1)  # Simulate processing delay
+    if data and data.get("requestType") == "expected_taxi_clearance":
+        exp_t_c_response["timestamp"] = datetime.now().strftime("%H:%M:%S")
+        return jsonify(exp_t_c_response)
+    elif data and data.get("requestType") == "taxi_clearance":
+        t_c_response["timestamp"] = datetime.now().strftime("%H:%M:%S")
+        return jsonify(t_c_response)
     else:
         app.logger.error("Invalid request type for loading taxi clearance.")
         return jsonify({"error": INVALID_DATA_ERROR}), 400
@@ -207,12 +247,12 @@ def execute_action():
     data = request.get_json()
     if data:
         set_bool("execute", True, agent)
-        if response["status"] == None or response["status"] == "open":
+        if exp_t_c_response["status"] == None or exp_t_c_response["status"] == "open":
             return jsonify({"error": "Action in progress"}), 400
         time.sleep(1)  # Simulate processing delay
-        response["timestamp"] =datetime.now().strftime("%H:%M:%S")
+        exp_t_c_response["timestamp"] =datetime.now().strftime("%H:%M:%S")
         app.logger.info("Execute action processed.")
-        return jsonify(response)
+        return jsonify(exp_t_c_response)
     else:
         app.logger.error("Invalid data for execute action.")
         return jsonify({"error": INVALID_DATA_ERROR}), 400
@@ -276,7 +316,8 @@ if __name__ == '__main__':
     igs.observe_freeze(on_freeze_callback, agent)
 
     igs.input_create("reset", igs.IMPULSION_T, None)
-    igs.input_create("string", igs.STRING_T, None)
+    igs.input_create("expected_t_c", igs.STRING_T, None)
+    igs.input_create("t_c", igs.STRING_T, None)
 
     igs.output_create("Expected_Taxi_Clearance", igs.BOOL_T, False)
     igs.output_create("Engine_Startup", igs.BOOL_T, None)
@@ -292,7 +333,8 @@ if __name__ == '__main__':
 
 
     igs.observe_input("reset", reset_callback, agent)
-    igs.observe_input("string", string_input_callback, agent)
+    igs.observe_input("expected_t_c", exp_t_c_string_input_callback, agent)
+    igs.observe_input("t_c", t_c_string_input_callback, agent)
 
     igs.log_set_console(True)
     igs.log_set_console_level(igs.LOG_INFO)

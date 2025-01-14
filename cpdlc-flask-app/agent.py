@@ -27,7 +27,8 @@ class Echo(metaclass=Singleton):
     def __init__(self):
         # inputs
         self.boolI = None
-        self.stringI = None
+        self.exp_t_c = None
+        self.t_c = None
 
         # outputs
         self._exp_taxi_clearance = False
@@ -152,9 +153,6 @@ class Echo(metaclass=Singleton):
         self._unable = value
         if self._unable is not None:
             igs.output_set_bool("Unable", self._unable)
-
-
-
 
 
 
