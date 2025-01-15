@@ -159,14 +159,10 @@ def request_action(action):
         elif action == "taxi_clearance":
             set_bool("taxi_clearance", True, agent)
             print("Taxi clearance requested")
-            t_c_response["status"] = "open"
-            while t_c_response["status"] == "open":
-                time.sleep(1)
             t_c_response["timestamp"] = datetime.now().strftime("%H:%M:%S")
             t_c_response["action"] = action.replace(" ", "_").title()
             app.logger.info(f"Action requested: {action} - Response: {exp_t_c_response}")
             return jsonify(t_c_response)
-        
         else:
             if action == "engine_startup":
                 set_bool("engine_startup", True, agent)

@@ -326,8 +326,11 @@ function handleActionButtonClick(action) {
     }
 }
 
+let previous_exp = null;
+let previous_clearance = null;
+
 // Function for sending request actions (e.g., Expected Taxi Clearance, Engine Startup)
-function sendRequest(action, dropdownId, tickId, previous_msg) {
+function sendRequest(action, dropdownId, tickId) {
     if(action === "taxi_clearance") {
         console.log("Taxi Clearance button clicked: Sending a request to server...");
     }
@@ -341,9 +344,15 @@ function sendRequest(action, dropdownId, tickId, previous_msg) {
             console.error(data.error);
         }
         if(action === "expected_taxi_clearance") {
-            setTimeout(() => sendRequest('expected_taxi_clearance', dropdownId, tickId, previous_msg), 3000);
+            setTimeout(() => sendRequest('expected_taxi_clearance', dropdownId, tickId), 3000);
         }
-        if (action != "expected_taxi_clearance" || action === "expected_taxi_clearance" && data.message != previous_msg) {
+        else if(action === "taxi_clearance")
+        {
+            setTimeout(() => sendRequest('taxi_clearance', dropdownId, tickId), 3000);
+        }
+        if (action != "expected_taxi_clearance" && action != "taxi_clearance" ||
+            action === "expected_taxi_clearance" && data.message != previous_exp  && data.message != null ||
+            action === "taxi_clearance" && data.message != previous_clearance && data.message != null) {
             const messageBox = document.getElementById('message-box');
             const newMessage = document.createElement('div');
             newMessage.innerHTML = `
@@ -363,7 +372,11 @@ function sendRequest(action, dropdownId, tickId, previous_msg) {
             // Update taxi clearance if applicable
             if (action === "expected_taxi_clearance") {
                 updateTaxiClearance(data.message, "open");
-                previous_msg = data.message;
+                previous_exp = data.message;
+            }
+            if(action === "taxi_clearance") {
+                updateTaxiClearance(data.message, "open");
+                previous_clearance = data.message;
             }
             messageBox.scrollTop = messageBox.scrollHeight;
             previous_entry = action;
