@@ -4,6 +4,7 @@ import time
 import signal
 import sys
 from agent import *
+import threading
 
 app = Flask(__name__)
 
@@ -29,14 +30,16 @@ def reset_callback(io_type, name, value_type, value, my_data):
     igs.info(f"Output reset")
     agent_object = my_data
     assert isinstance(agent_object, Echo)
+    t_c_response["status"] = "open"
+    t_c_response["message"]= ""
+    exp_t_c_response["status"] = "open"
+    exp_t_c_response["message"]= ""
     agent_object.Exp_Taxi_Clearance = False
     agent_object.Engine_Startup = False
     agent_object.Pushback = False
     agent_object.Taxi_Clearance = False
     agent_object.De_Icing = False
-    agent_object.Load = False
     agent_object.Wilco = False
-    agent_object.Execute = False
     agent_object.Cancel = False
     agent_object.Standby = False
     agent_object.Unable = False
@@ -340,4 +343,4 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
 
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5320)
